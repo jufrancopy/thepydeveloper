@@ -257,26 +257,26 @@
                     <h2>Contacto</h2>
                     <p>¿Tienes preguntas específicas sobre tu proyecto? Contáctanos directamente.</p>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> contacto@pydeveloper.com</li>
-                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +595 123 456789</li>
-                        <li class="mb-2"><i class="fab fa-whatsapp me-2"></i> +595 987 654321</li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> thepydeveloper@gmail.com</li>
+                        <li class="mb-2">
+                            <a href="https://wa.me/595981574711" target="_blank" class="text-white">
+                                <i class="fab fa-whatsapp me-2"></i> +595 981 574 711
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    <form id="main-contact-form">
+                    <form id="main-contact-form" action="https://formspree.io/f/maneajbk" method="POST">
                         <div class="mb-3">
-                            <label for="contact-name" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="contact-name" required>
+                            <label for="contact-email" class="form-label">Tu Email:</label>
+                            <input type="email" class="form-control" id="contact-email" name="email" required>
                         </div>
                         <div class="mb-3">
-                            <label for="contact-email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="contact-email" required>
+                            <label for="contact-message" class="form-label">Tu Mensaje:</label>
+                            <textarea class="form-control" id="contact-message" name="message" rows="3"
+                                required></textarea>
                         </div>
-                        <div class="mb-3">
-                            <label for="contact-message" class="form-label">Mensaje</label>
-                            <textarea class="form-control" id="contact-message" rows="3" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Enviar Mensaje</button>
+                        <button type="submit" class="btn btn-primary">Enviar</button>
                     </form>
                 </div>
             </div>
@@ -289,9 +289,9 @@
             <div class="row">
                 <div class="col-md-4">
                     <a class="navbar-brand rounded-circle bg-white p-1 d-flex align-items-center justify-content-center"
-                        href="#">
-                        <img src="images/logo.png" alt="The PyDeveloper" height="80">
-                        <!-- Reducimos un poco el height -->
+                        href="#" style="width: 80px; height: 80px;">
+                        <img src="images/logo.png" alt="The PyDeveloper"
+                            style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </a>
                     <p class="mt-2">Desarrollo de sistemas web a medida para tu negocio.</p>
                 </div>
@@ -316,7 +316,7 @@
             </div>
             <hr class="my-3 bg-light">
             <div class="text-center">
-                <small>&copy; 2023 The PyDeveloper. Todos los derechos reservados.</small>
+                <small>&copy; 2025 The PyDeveloper. Todos los derechos reservados.</small>
             </div>
         </div>
     </footer>
