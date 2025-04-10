@@ -205,32 +205,37 @@ const config = {
             ]
         }
     ],
+
     packages: [
         {
             id: 'startup',
             name: 'Startup',
-            price: 1500,
             description: 'Perfecto para emprendimientos que comienzan',
             includes: ['product-management', 'customer-management', 'billing-pos', 'auth-security'],
-            recommendedServer: 'basic'
+            recommendedServer: 'basic',
+            discount: 15 // 15% de descuento
         },
         {
             id: 'business',
             name: 'Negocio',
-            price: 3500,
             description: 'Ideal para pequeñas y medianas empresas',
-            includes: ['product-management', 'supplier-management', 'customer-management', 'billing-pos', 'reports', 'auth-security'],
-            recommendedServer: 'standard'
+            includes: ['product-management', 'supplier-management', 'customer-management',
+                'billing-pos', 'reports', 'auth-security'],
+            recommendedServer: 'standard',
+            discount: 20 // 20% de descuento
         },
         {
             id: 'enterprise',
             name: 'Empresa',
-            price: 7000,
             description: 'Solución completa para grandes organizaciones',
-            includes: ['product-management', 'supplier-management', 'customer-management', 'branch-management', 'billing-pos', 'logistics', 'reports', 'api-integration', 'auth-security'],
-            recommendedServer: 'advanced'
+            includes: ['product-management', 'supplier-management', 'customer-management',
+                'branch-management', 'billing-pos', 'logistics', 'reports',
+                'api-integration', 'auth-security'],
+            recommendedServer: 'advanced',
+            discount: 25 // 25% de descuento
         }
     ],
+
     faqs: [
         {
             question: "¿Cuánto tiempo toma desarrollar un sistema personalizado?",
@@ -242,6 +247,7 @@ const config = {
         },
         // Más preguntas frecuentes...
     ],
+
     exchangeRate: 7200 // PYG por 1 USD
 };
 
@@ -485,55 +491,176 @@ function showMaintenanceDetails(service) {
         confirmButtonColor: '#3498db'
     });
 }
+function calculatePackagePrice(packageId) {
+    const pkg = config.packages.find(p => p.id === packageId);
+    if (!pkg) return 0;
 
-// Cargar paquetes predefinidos
+    // Sumar el precio de todos los módulos incluidos
+    let total = pkg.includes.reduce((sum, moduleId) => {
+        const module = config.modules.find(m => m.id === moduleId);
+        return sum + (module?.price || 0);
+    }, 0);
+
+    // Aplicar descuento del paquete
+    return total * (1 - (pkg.discount / 100));
+}
 function loadPackages() {
     const container = document.querySelector('#packages .row');
+    if (!container) return;
+
+    container.innerHTML = '';
+    console.log('Paquetes configurados:', config.packages);
 
     config.packages.forEach(pkg => {
-        const pkgElement = document.createElement('div');
-        pkgElement.className = 'col-md-4 mb-4';
-        pkgElement.innerHTML = `
-            <div class="card h-100">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="my-0 fw-normal">${pkg.name}</h4>
+        try {
+            const price = calculatePackagePrice(pkg.id);
+            const pkgElement = document.createElement('div');
+            pkgElement.className = 'col-md-4 mb-4';
+
+            // Generar lista de módulos con validación robusta
+            const modulesList = pkg.includes.map(moduleId => {
+                const module = config.modules.find(m => m.id === moduleId);
+                if (!module) {
+                    console.warn(`Módulo no encontrado en paquete ${pkg.id}:`, moduleId);
+                    return `<li class="text-warning small">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${moduleId} (no disponible)
+                    </li>`;
+                }
+                return `<li><i class="fas fa-${module.icon} me-2"></i>${module.title}</li>`;
+            }).join('');
+
+            pkgElement.innerHTML = `
+                <div class="card h-100 package-card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="my-0 fw-normal">${pkg.name}</h4>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h1 class="card-title pricing-card-title">${formatCurrency(price)}</h1>
+                        <p class="card-text">${pkg.description}</p>
+                        <ul class="list-unstyled mt-3 mb-4 flex-grow-1">
+                            ${modulesList}
+                        </ul>
+                        <div class="mt-auto">
+                            <button type="button" class="btn btn-lg btn-outline-primary select-package w-100"
+                                    data-package-id="${pkg.id}">
+                                Seleccionar Paquete
+                            </button>
+                            ${pkg.discount > 0 ? `
+                                <div class="text-center mt-2 small text-success">
+                                    <i class="fas fa-percentage"></i> ${pkg.discount}% de descuento
+                                </div>` : ''}
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <h1 class="card-title pricing-card-title">$${pkg.price}</h1>
-                    <p class="card-text">${pkg.description}</p>
-                    <ul class="list-unstyled mt-3 mb-4">
-                        ${pkg.includes.map(moduleId => {
+            `;
+
+            container.appendChild(pkgElement);
+
+            // Evento para seleccionar paquete
+            pkgElement.querySelector('.select-package').addEventListener('click', function () {
+                console.log('Paquete seleccionado:', pkg.id, pkg);
+                selectPackage(pkg.id);
+            });
+
+        } catch (error) {
+            console.error(`Error al cargar paquete ${pkg.id}:`, error);
+            // Opcional: Mostrar tarjeta de error al usuario
+            container.innerHTML += `
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h4 class="my-0 fw-normal">Error en paquete</h4>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-danger">No se pudo cargar el paquete "${pkg.name}"</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+}
+
+//Package selection
+// 3. Función selectPackage con validación mejorada
+function selectPackage(packageId) {
+    const pkg = config.packages.find(p => p.id === packageId);
+    if (!pkg) {
+        Swal.fire('Error', 'Paquete no encontrado', 'error');
+        return;
+    }
+
+    // Verificar que todos los módulos existan
+    const missingModules = pkg.includes.filter(moduleId =>
+        !config.modules.some(m => m.id === moduleId)
+    );
+
+    if (missingModules.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error en configuración',
+            html: `Los siguientes módulos no existen: <strong>${missingModules.join(', ')}</strong>`,
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
+    // Actualizar estado
+    state.selectedPackage = packageId;
+    state.selectedModules = [...pkg.includes];
+    state.selectedServer = pkg.recommendedServer;
+
+    // Calcular precios
+    const originalPrice = pkg.includes.reduce((sum, moduleId) => {
+        const module = config.modules.find(m => m.id === moduleId);
+        return sum + (module?.price || 0);
+    }, 0);
+
+    state.packageSavings = {
+        original: originalPrice,
+        discount: pkg.discount,
+        final: calculatePackagePrice(packageId),
+        missingModules: missingModules
+    };
+
+    // Actualizar UI
+    saveToLocalStorage();
+    updateUI();
+    goToStep(4);
+
+    // Feedback visual mejorado
+    Swal.fire({
+        icon: missingModules.length ? 'warning' : 'success',
+        title: `Paquete ${pkg.name} seleccionado`,
+        html: `
+            <div class="text-start">
+                <p>Has seleccionado el paquete <strong>${pkg.name}</strong></p>
+                <ul class="text-start">
+                    ${pkg.includes.map(moduleId => {
             const module = config.modules.find(m => m.id === moduleId);
-            return `<li><i class="fas ${module.icon} me-2"></i>${module.title}</li>`;
+            if (!module) {
+                return `<li class="text-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Módulo no disponible (${moduleId})
+                            </li>`;
+            }
+            return `<li><i class="fas fa-${module.icon} text-primary me-2"></i>${module.title}</li>`;
         }).join('')}
-                    </ul>
-                    <button type="button" class="btn btn-lg btn-outline-primary select-package w-100" data-package-id="${pkg.id}">
-                        Seleccionar Paquete
-                    </button>
+                </ul>
+                ${missingModules.length > 0 ?
+                `<div class="alert alert-danger mt-3 p-2 small">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Advertencia: ${missingModules.length} módulo(s) no disponible(s)
+                    </div>` : ''}
+                <div class="alert alert-success mt-3 p-2 small">
+                    <i class="fas fa-tag me-2"></i>
+                    Ahorras un <strong>${pkg.discount}%</strong> (${formatCurrency(originalPrice - state.packageSavings.final)})
                 </div>
             </div>
-        `;
-        container.appendChild(pkgElement);
-
-        // Agregar evento al botón de selección
-        const button = pkgElement.querySelector('.select-package');
-        button.addEventListener('click', function () {
-            const pkgId = this.getAttribute('data-package-id');
-            const selectedPackage = config.packages.find(p => p.id === pkgId);
-
-            // Actualizar estado
-            state.selectedModules = [...selectedPackage.includes];
-            state.selectedServer = selectedPackage.recommendedServer;
-            state.selectedServices = [];
-
-            // Actualizar UI
-            updateCheckboxes();
-            saveToLocalStorage();
-            updateUI();
-
-            // Ir al paso 4 para ver el resumen
-            goToStep(4);
-        });
+        `,
+        confirmButtonText: 'Continuar',
+        confirmButtonColor: missingModules.length ? '#f39c12' : '#2ecc71'
     });
 }
 
@@ -994,59 +1121,108 @@ function updateQuoteSummary() {
 
 // Actualizar totales
 function updateTotals() {
-    // Calcular subtotal
     let subtotal = 0;
 
-    // Sumar módulos
-    state.selectedModules.forEach(moduleId => {
-        const module = config.modules.find(m => m.id === moduleId);
-        subtotal += module.price;
-    });
-
-    // Sumar servidor (primer mes)
-    if (state.selectedServer) {
-        const server = config.serverPlans.find(s => s.id === state.selectedServer);
-        subtotal += server.price;
+    // 1. Calcular costo base (módulos o paquete)
+    if (state.selectedPackage) {
+        // Calcular precio del paquete con descuento
+        const pkg = config.packages.find(p => p.id === state.selectedPackage);
+        subtotal = pkg.includes.reduce((sum, moduleId) => {
+            const module = config.modules.find(m => m.id === moduleId);
+            return sum + (module?.price || 0);
+        }, 0) * (1 - (pkg.discount / 100));
+    } else {
+        // Sumar módulos individuales
+        state.selectedModules.forEach(moduleId => {
+            const module = config.modules.find(m => m.id === moduleId);
+            subtotal += module?.price || 0;
+        });
     }
 
-    // Sumar servicios adicionales
+    // 2. Sumar costo del servidor (primer año)
+    if (state.selectedServer) {
+        const server = config.serverPlans.find(s => s.id === state.selectedServer);
+        subtotal += server.price * 12; // 12 meses de hosting
+    }
+
+    // 3. Servicios adicionales (manejo mejorado de porcentajes)
     state.selectedServices.forEach(serviceId => {
         const service = config.additionalServices.find(s => s.id === serviceId);
+        if (!service) return;
+
         if (service.period === 'percent') {
-            subtotal += (service.price / 100) * subtotal;
+            // Aplicar porcentaje sobre el subtotal actual
+            subtotal += (subtotal * service.price) / 100;
+        } else if (service.period === 'hour' && service.quantity) {
+            // Servicios por horas (como capacitación)
+            subtotal += service.price * (service.quantity || 1);
         } else {
+            // Servicios con precio fijo
             subtotal += service.price;
         }
     });
 
-    // Sumar personalizaciones
+    // 4. Opciones técnicas
     if (state.databaseType === 'nosql') {
-        subtotal += 100;
+        subtotal += 100; // Costo adicional por NoSQL
     }
 
     if (state.backup) {
-        subtotal += 15;
+        subtotal += 15 * 12; // Backup anual
     }
 
+    // 5. Personalizaciones (aplicar sobre subtotal actual)
     if (state.customDesign) {
-        subtotal += subtotal * 0.2;
+        subtotal *= 1.2; // +20%
     }
 
     if (state.expressDev) {
-        subtotal += subtotal * 0.3;
+        subtotal *= 1.3; // +30%
     }
 
-
-    // Calcular impuestos
+    // 6. Calcular impuestos
     const taxRate = state.includeTax ? 0.1 : 0;
     const taxAmount = subtotal * taxRate;
     const total = subtotal + taxAmount;
 
-    // Actualizar UI
+    // 7. Actualizar UI con formato consistente
     document.getElementById('subtotal').textContent = formatCurrency(subtotal);
     document.getElementById('tax-amount').textContent = formatCurrency(taxAmount);
     document.getElementById('total-amount').textContent = formatCurrency(total);
+
+    // 8. Actualizar detalles de ahorro si hay paquete
+    if (state.selectedPackage) {
+        updatePackageSavingsDisplay();
+    }
 }
+
+// Función auxiliar para mostrar ahorros de paquetes
+function updatePackageSavingsDisplay() {
+    const pkg = config.packages.find(p => p.id === state.selectedPackage);
+    if (!pkg) return;
+
+    const originalPrice = pkg.includes.reduce((sum, moduleId) => {
+        const module = config.modules.find(m => m.id === moduleId);
+        return sum + (module?.price || 0);
+    }, 0);
+
+    const savingsElement = document.getElementById('package-savings');
+    if (savingsElement) {
+        savingsElement.innerHTML = `
+            <div class="alert alert-success p-2 mb-3">
+                <div class="d-flex justify-content-between">
+                    <span>Descuento por paquete ${pkg.name}:</span>
+                    <span>-${formatCurrency(originalPrice - calculatePackagePrice(pkg.id))} (${pkg.discount}%)</span>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>Precio original:</span>
+                    <span><del>${formatCurrency(originalPrice)}</del></span>
+                </div>
+            </div>
+        `;
+    }
+}
+
 
 // Formatear moneda según selección
 function formatCurrency(amount) {
