@@ -11,7 +11,7 @@ const config = {
             id: 'product-management',
             title: 'Gestión de Productos',
             description: 'Catálogo, inventario y categorías de productos',
-            price: 300,
+            price: 500,
             icon: 'fa-boxes',
             category: 'core'
         },
@@ -19,7 +19,7 @@ const config = {
             id: 'supplier-management',
             title: 'Gestión de Proveedores',
             description: 'Registro, compras y contactos con proveedores',
-            price: 250,
+            price: 500,
             icon: 'fa-truck',
             category: 'core'
         },
@@ -27,7 +27,7 @@ const config = {
             id: 'customer-management',
             title: 'Gestión de Clientes',
             description: 'CRM con historial y segmentación de clientes',
-            price: 350,
+            price: 500,
             icon: 'fa-users',
             category: 'core'
         },
@@ -35,7 +35,7 @@ const config = {
             id: 'branch-management',
             title: 'Gestión de Sucursales',
             description: 'Multi-locación y transferencias entre sucursales',
-            price: 400,
+            price: 650,
             icon: 'fa-store',
             category: 'core'
         },
@@ -43,7 +43,7 @@ const config = {
             id: 'billing-pos',
             title: 'Facturación/Caja',
             description: 'Sistema POS con recibos y notas de crédito',
-            price: 450,
+            price: 670,
             icon: 'fa-cash-register',
             category: 'core'
         },
@@ -51,7 +51,7 @@ const config = {
             id: 'logistics',
             title: 'Logística',
             description: 'Envíos, tracking y gestión de transportistas',
-            price: 500,
+            price: 700,
             icon: 'fa-shipping-fast',
             category: 'advanced'
         },
@@ -59,7 +59,7 @@ const config = {
             id: 'reports',
             title: 'Reportes Avanzados',
             description: 'Analítica y dashboards personalizados',
-            price: 400,
+            price: 600,
             icon: 'fa-chart-bar',
             category: 'advanced'
         },
@@ -67,7 +67,7 @@ const config = {
             id: 'api-integration',
             title: 'API de Integración',
             description: 'Conexión con otros sistemas mediante API',
-            price: 600,
+            price: 800,
             icon: 'fa-plug',
             category: 'advanced'
         },
@@ -75,7 +75,7 @@ const config = {
             id: 'auth-security',
             title: 'Autenticación Segura',
             description: 'Sistema multirol con permisos granulars',
-            price: 350,
+            price: 450,
             icon: 'fa-lock',
             category: 'core'
         },
@@ -83,7 +83,7 @@ const config = {
             id: 'ecommerce',
             title: 'E-commerce',
             description: 'Carrito de compras y pasarelas de pago',
-            price: 800,
+            price: 1100,
             icon: 'fa-shopping-cart',
             category: 'advanced'
         },
@@ -91,7 +91,7 @@ const config = {
             id: 'blog-news',
             title: 'Blog/Noticias',
             description: 'Gestor de contenidos para blog o noticias',
-            price: 200,
+            price: 350,
             icon: 'fa-newspaper',
             category: 'content'
         },
@@ -99,7 +99,7 @@ const config = {
             id: 'booking',
             title: 'Reservas/Citas',
             description: 'Calendario y gestión de disponibilidad',
-            price: 450,
+            price: 650,
             icon: 'fa-calendar-check',
             category: 'advanced'
         },
@@ -107,7 +107,7 @@ const config = {
             id: 'chat',
             title: 'Chat Interno',
             description: 'Mensajería entre usuarios del sistema',
-            price: 300,
+            price: 450,
             icon: 'fa-comments',
             category: 'communication'
         }
@@ -146,7 +146,7 @@ const config = {
         {
             id: 'custom-domain',
             name: 'Dominio personalizado',
-            price: 10,
+            price: 20,
             period: 'year',
             description: 'Registro de dominio con tu marca (.com, .net, etc.)'
         },
@@ -181,9 +181,28 @@ const config = {
         {
             id: 'maintenance',
             name: 'Mantenimiento mensual',
+            price: 10, // 10% del costo total
+            period: 'percent',
+            description: 'Actualizaciones y soporte continuo (10% del costo total mensual)',
+            includes: [
+                'Actualizaciones de seguridad',
+                'Soporte prioritario',
+                'Mejoras menores',
+                'Backups automáticos'
+            ]
+        },
+        {
+            id: 'maintenance',
+            name: 'Mantenimiento mensual',
             price: 10,
             period: 'percent',
-            description: 'Actualizaciones y mantenimiento continuo'
+            description: 'Soporte continuo (10% del valor total) incluye: actualizaciones, backups y soporte prioritario',
+            features: [
+                'Actualizaciones de seguridad mensuales',
+                'Backups automáticos diarios',
+                'Soporte técnico prioritario',
+                'Mejoras menores continuas'
+            ]
         }
     ],
     packages: [
@@ -352,38 +371,118 @@ function loadServerPlans() {
     });
 }
 
-// Cargar servicios adicionales
+
+// Cargar servicios adicionales (versión optimizada)
 function loadAdditionalServices() {
     const container = document.getElementById('additional-services');
+    if (!container) return; // Validación de seguridad
+
+    // Limpiar contenedor antes de cargar
+    container.innerHTML = '';
 
     config.additionalServices.forEach(service => {
+        const isSelected = state.selectedServices.includes(service.id);
+        const priceLabel = service.period === 'percent'
+            ? `${service.price}%`
+            : `$${service.price}${getPeriodSuffix(service.period)}`;
+
         const serviceElement = document.createElement('div');
-        serviceElement.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+        serviceElement.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 ${isSelected ? 'active' : ''}`;
+
         serviceElement.innerHTML = `
-            <div>
-                <h6 class="mb-1">${service.name}</h6>
+            <div class="d-flex flex-column" ${service.features ? buildTooltipAttributes(service.features) : ''}>
+                <h6 class="mb-1 d-flex align-items-center">
+                    ${service.name}
+                    ${service.period === 'percent' ? '<span class="badge bg-warning text-dark ms-2">Recomendado</span>' : ''}
+                </h6>
                 <small class="text-muted">${service.description}</small>
+                ${service.period === 'percent' ? buildInfoBadge() : ''}
             </div>
             <div class="d-flex align-items-center">
-                <span class="me-3">$${service.price}${service.period === 'year' ? '/año' : service.period === 'hour' ? '/hora' : service.period === 'percent' ? '%' : ''}</span>
+                <span class="me-3 fw-bold">${priceLabel}</span>
                 <div class="form-check form-switch">
-                    <input class="form-check-input service-checkbox" type="checkbox" id="${service.id}-checkbox">
+                    <input class="form-check-input service-checkbox" type="checkbox" 
+                           id="${service.id}-checkbox" ${isSelected ? 'checked' : ''}>
                 </div>
             </div>
         `;
-        container.appendChild(serviceElement);
 
-        // Agregar evento al checkbox
-        const checkbox = serviceElement.querySelector('.service-checkbox');
-        checkbox.addEventListener('change', function () {
-            if (this.checked) {
-                state.selectedServices.push(service.id);
-            } else {
-                state.selectedServices = state.selectedServices.filter(id => id !== service.id);
-            }
-            saveToLocalStorage();
-            updateUI();
+        container.appendChild(serviceElement);
+        setupServiceEventHandlers(serviceElement, service);
+    });
+}
+
+// Funciones auxiliares
+function getPeriodSuffix(period) {
+    const suffixes = {
+        year: '/año',
+        hour: '/hora',
+        month: '/mes'
+    };
+    return period ? suffixes[period] || '' : '';
+}
+
+function buildTooltipAttributes(features) {
+    return `data-bs-toggle="tooltip" data-bs-html="true" 
+            title="<ul>${features.map(f => `<li>${f}</li>`).join('')}</ul>"`;
+}
+
+function buildInfoBadge() {
+    return '<small class="text-info mt-1"><i class="fas fa-info-circle me-1"></i>Calculado sobre el total</small>';
+}
+
+function setupServiceEventHandlers(element, service) {
+    // Tooltip
+    if (service.features) {
+        new bootstrap.Tooltip(element.querySelector('[data-bs-toggle="tooltip"]'), {
+            html: true,
+            placement: 'right',
+            customClass: 'service-tooltip'
         });
+    }
+
+    // Checkbox handler
+    const checkbox = element.querySelector('.service-checkbox');
+    checkbox.addEventListener('change', function () {
+        updateServiceSelection(service.id, this.checked);
+        handleMaintenanceNotification(service, this.checked);
+    });
+}
+
+function updateServiceSelection(serviceId, isSelected) {
+    if (isSelected) {
+        state.selectedServices.push(serviceId);
+    } else {
+        state.selectedServices = state.selectedServices.filter(id => id !== serviceId);
+    }
+    saveToLocalStorage();
+    updateUI();
+}
+
+function handleMaintenanceNotification(service, isChecked) {
+    if (service.id === 'maintenance' && isChecked) {
+        showMaintenanceDetails(service);
+    }
+}
+
+function showMaintenanceDetails(service) {
+    Swal.fire({
+        icon: 'info',
+        title: 'Mantenimiento Adicional',
+        html: `
+            <div class="text-start">
+                <p>Has seleccionado el servicio de mantenimiento mensual que incluye:</p>
+                <ul class="text-start">
+                    ${service.features.map(f => `<li><i class="fas fa-check-circle text-success me-2"></i>${f}</li>`).join('')}
+                </ul>
+                <div class="alert alert-info mt-3 p-2 small">
+                    <i class="fas fa-calculator me-2"></i>
+                    Este servicio se calcula como el <strong>${service.price}%</strong> del valor total
+                </div>
+            </div>
+        `,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#3498db'
     });
 }
 
@@ -937,6 +1036,7 @@ function updateTotals() {
         subtotal += subtotal * 0.3;
     }
 
+
     // Calcular impuestos
     const taxRate = state.includeTax ? 0.1 : 0;
     const taxAmount = subtotal * taxRate;
@@ -1139,9 +1239,9 @@ function generatePDF() {
         doc.setFontSize(10);
         doc.setTextColor(100, 100, 100);
         doc.text(safeText('The PyDeveloper'), 160, 15);
-        doc.text(safeText('contacto@pydeveloper.com'), 160, 20);
-        doc.text(safeText('+595 123 456789'), 160, 25);
-        doc.text(safeText('www.pydeveloper.com'), 160, 30);
+        doc.text(safeText('thepydeveloper@gmail.com'), 160, 20);
+        doc.text(safeText('0981574711'), 160, 25);
+        doc.text(safeText('www.thepydeveloper.dev'), 160, 30);
 
         // Línea separadora
         doc.setDrawColor(200, 200, 200);
