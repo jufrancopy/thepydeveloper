@@ -1,7 +1,90 @@
-// Configuración inicial
+// Configuración inicial mejorada
 document.addEventListener('DOMContentLoaded', function () {
-    // Inicializar la aplicación
     initApp();
+
+    // Posicionamiento inicial con verificación de header
+    const initPositioning = () => {
+        const header = document.querySelector('nav.navbar');
+        const headerHeight = header?.offsetHeight || 70;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+
+        // Ir al paso guardado o al primero
+        goToStep(state.currentStep || 1);
+
+        // Enfocar el título del paso actual después de un breve retraso
+        setTimeout(() => {
+            const currentStepTitle = document.querySelector(`#step${state.currentStep || 1} h2`);
+            currentStepTitle?.focus({ preventScroll: true });
+        }, 150);
+    };
+
+    // Retraso inicial para asegurar que todo esté cargado
+    setTimeout(initPositioning, 50);
+});
+
+// Navegación hacia adelante (Módulos -> Servidor)
+document.getElementById('nextToServer')?.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    // Validación de módulos seleccionados
+    if (state.selectedModules.length === 0) {
+        showModuleValidationError();
+        return;
+    }
+
+    // Animación de transición
+    this.classList.add('btn-processing');
+
+    // Cambiar de paso con retraso para permitir la animación
+    setTimeout(() => {
+        goToStep(2);
+
+        // Enfocar y posicionar correctamente el siguiente paso
+        setTimeout(() => {
+            const stepTitle = document.querySelector('#step2 h2');
+            if (stepTitle) {
+                stepTitle.tabIndex = -1;
+                stepTitle.focus();
+                stepTitle.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+            this.classList.remove('btn-processing');
+        }, 50);
+    }, 200);
+});
+
+// Navegación hacia atrás (Servidor -> Módulos)
+document.getElementById('backToModules')?.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    // Animación de transición
+    this.classList.add('btn-processing');
+
+    setTimeout(() => {
+        goToStep(1);
+
+        // Posicionamiento preciso al volver
+        setTimeout(() => {
+            const modulesTitle = document.querySelector('#step1 h2');
+            if (modulesTitle) {
+                modulesTitle.tabIndex = -1;
+                modulesTitle.focus();
+
+                // Scroll preciso considerando el header
+                const headerHeight = parseInt(getComputedStyle(document.documentElement)
+                    .getPropertyValue('--header-height')) || 70;
+                const targetPosition = modulesTitle.getBoundingClientRect().top + window.scrollY - headerHeight - 20;
+
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+            this.classList.remove('btn-processing');
+        }, 50);
+    }, 200);
 });
 
 // Objeto de configuración con precios y datos
